@@ -10,79 +10,77 @@ clock = pyg.time.Clock()
 running = True
 
 connected = False
-dragging = False
+
 drag_start = None
 stops = []
 edges = []
-mods = pyg.key.get_mods()
+
 moving = False
 move_target = None
 move_offset = (0,0)
-
+mode = "idle"
 
 while running:
-	# poll for events
-	# pygame.QUIT event means the user clicked X to close your window
 	for event in pyg.event.get():
 		if event.type == pyg.QUIT:
 			running = False
 
-		
-		#move stops
+		#stopsV2
 		if event.type == pyg.MOUSEBUTTONDOWN and event.button == 1:
 			mouse_pos = pyg.mouse.get_pos()
+			mods = pyg.key.get_mods()
 			selected = get_stop_near(mouse_pos, stops)
 
-
-			mods = pyg.key.get_mods()
-			if mods & pyg.KMOD_SHIFT:
-				target = get_stop_near(mouse_pos, stops, threshold=10)
-				if target:
-					moving = True
-					move_target = target
-					move_offset = (mouse_pos[0] - target.location[0], mouse_pos[1] - target.location[1])
-
-			if selected:
-				dragging = True
-				drag_start = selected
-			else:
-				new_stop = Stop(mouse_pos[0], mouse_pos[1])
-				stops.append(new_stop)
-
+			if (mods & pyg.KMOD_SHIFT) and selected:
+				mode = "moving" 
+				mode_target = selected
+				mode_offset = (mouse_pos[0] - selected.location[0], mouse_pos[1] - selected.location[1])
 			
+			elif selected:
+				mode = "connecting"
+				drag_start = selected
+			
+			else:
+				stops.append(Stop(mouse_pos[0], mouse_pos[1]))
+				mode = "idle"
 
-
+		#move a stop
+		if event.type == pyg.MOUSEMOTION and mode == "moving":
+			mx, my = event.pos
+			mode_target.location = np.array([mx - mode_offset[0], my - mode_offset[1]])
+		
+		if event.type == pyg.MOUSEBUTTONUP and event.button == 1 and mode == "moving":
+			mode = "idle"
+			mode_target = None
+			mode_offset = (0, 0)
 
 		#road drawing
-		if event.type == pyg.MOUSEBUTTONUP and event.button == 1 and dragging:
+		if event.type == pyg.MOUSEBUTTONUP and event.button == 1 and mode == "connecting":
 			mouse_pos = pyg.mouse.get_pos()
 			target = get_stop_near(mouse_pos, stops)
-
-			if target and target is not drag_start:
+			
+			if target is not None and target is not drag_start:
 				mods = pyg.key.get_mods()
 				
-			if (drag_start, target) not in edges:
-				edges.append((drag_start, target))
-				drag_start.connections.append(target)
-				print(f"Connected {drag_start.location} → {target.location}"
-						+ (" (one-way)" if mods & pyg.KMOD_CTRL else ""))
+				if (drag_start, target) not in edges:
+					edges.append((drag_start, target))
+					drag_start.connections.append(target)
+					print(f"Connected {drag_start.location} to {target.location}" + (" (one-way)" if (mods & pyg.KMOD_CTRL) else ""))
 
+				
+				if not (mods & pyg.KMOD_CTRL):
+					if (target, drag_start) not in edges:
+						edges.append((target, drag_start))
+						target.connections.append(drag_start)
+						print(f"Connected {target.location} to {drag_start.location}")
 			
-			if not (mods & pyg.KMOD_CTRL):
-				if (target, drag_start) not in edges:
-					edges.append((target, drag_start))
-					target.connections.append(drag_start)
-					print(f"Connected {target.location} → {drag_start.location}")
-
-
-			
-			
-			dragging = False
+			mode = "idle"
 			drag_start = None
 
 		#delete a stop
 		if event.type == pyg.MOUSEBUTTONDOWN and event.button == 3:
 			mouse_pos = pyg.mouse.get_pos()
+			mods = pyg.key.get_mods()
 			target = get_stop_near(mouse_pos, stops, threshold=25)
 			if target:
 				stops.remove(target)
@@ -90,23 +88,22 @@ while running:
 			for s in stops:
 				if target in s.connections:
 					s.connections.remove(target)
-			
-			# for edge in edges:
-			# 	a, b = edge
-			# 	if mods & pyg.KMOD_CTRL and is_road_near(mouse_pos, edge, threshold=25):
-			# 		edges.remove(edge)
-			# 		if b in a.connections:
-            #         	a.connections.remove(b)
 		
-		if moving and event.type == pyg.MOUSEMOTION:
-				mx, my = event.pos
-				move_target.location = np.array([mx - move_offset[0], my - move_offset[1]])
+		#delete a road
+			if mods & pyg.KMOD_CTRL:
+				for edge in edges[:]:
+					a, b = edge
 
-		if moving and event.type == pyg.MOUSEBUTTONUP and event.button == 1:
-			moving = False
-			move_target = None
-
-
+					if is_road_near(mouse_pos, (a.location, b.location), threshold=30):
+						edges.remove(edge)
+						if b in a.connections:
+							a.connections.remove(b)
+							print(a.connections)
+						if (b,a) in edges:
+							edges.remove((b,a))
+							if a in b.connections:
+								b.connections.remove(a)
+								print(b.connections)
 
 
 	screen.fill((0, 0, 0))
@@ -115,11 +112,17 @@ while running:
 		stop.draw(screen)
 
 	for a, b in edges:
-		pyg.draw.line(screen, (255, 255, 255), a.location, b.location, 2)
+		if (b, a) in edges:               # now true for a real two-way road
+			pyg.draw.line(screen, (255,255,255), a.location, b.location, 2)
+		else:
+			draw_arrow(screen, a.location, b.location, (255,255,255))
+	
+
 		
+	
 
 
-	if dragging and drag_start:
+	if mode == "connecting" and drag_start:
 		pyg.draw.line(screen, (150, 150, 150), drag_start.location, pyg.mouse.get_pos(), 2)
 
 
