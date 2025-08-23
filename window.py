@@ -2,6 +2,7 @@ import pygame as pyg
 from stop import Stop
 from utils import *
 import numpy as np
+from bus import Bus
 
 
 pyg.init()
@@ -14,6 +15,8 @@ connected = False
 drag_start = None
 stops = []
 edges = []
+
+bus = None
 
 moving = False
 move_target = None
@@ -105,6 +108,11 @@ while running:
 								b.connections.remove(a)
 								print(b.connections)
 
+		#Bus spawning
+		if event.type == pyg.KEYDOWN and event.key == pyg.K_SPACE and len(stops) > 1:
+			print("spawning a bus!")
+			bus = Bus(start_stop = stops[0])
+			bus.set_route(stops)
 
 	screen.fill((0, 0, 0))
 	
@@ -118,9 +126,11 @@ while running:
 			draw_arrow(screen, a.location, b.location, (255,255,255))
 	
 
+	dt = clock.get_time() / 1000.0	
+	if bus is not None:
+		bus.update(dt)
+		bus.draw(screen)
 		
-	
-
 
 	if mode == "connecting" and drag_start:
 		pyg.draw.line(screen, (150, 150, 150), drag_start.location, pyg.mouse.get_pos(), 2)

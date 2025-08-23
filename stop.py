@@ -3,7 +3,7 @@ import pygame as pyg
 
 class Stop:
     def __init__(self, x, y, world=None):
-        self.location = np.array([x, y])
+        self.location = np.array([x, y], dtype=float)
         self.passengers_waiting = 0
         self.loading = False
         self.bus = False
