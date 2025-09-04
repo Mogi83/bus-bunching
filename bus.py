@@ -6,6 +6,13 @@ import math
 
 meters_per_pixel = 0.2
 
+# Missing Functionalty
+# Loading passengers
+# Updating when a new stop is added
+# Data output like time to stop, 
+# A way of applying treatments (and introducing more chaos)
+#
+
 class Bus:
     def __init__(self, start_stop):
         if start_stop != None:
@@ -22,8 +29,11 @@ class Bus:
         self.current_stop = start_stop
         self.braking_rng = np.random.default_rng()
         self.brake_buffer = self.braking_rng.uniform(1.0, 5.0) #to add variaton between buses and drivers. in m.
+        self.color1 = self.braking_rng.uniform(75,255)
+        self.color2 = self.braking_rng.uniform(75,255)
+        self.color3 = self.braking_rng.uniform(75,255)
         self.size = (25, 17)
-        self.color = (255, 0, 200)
+        self.bus_color = (self.color1, self.color2, self.color3)
         self.route = []
         self.routeidx = 0
         self.dwell = 0.0  #how long a bus will wait after arrival
@@ -31,7 +41,7 @@ class Bus:
 
     def draw(self, screen):
         bus_surface = pyg.Surface(self.size, pyg.SRCALPHA)
-        pyg.draw.rect(bus_surface, self.color, (0, 0, self.size[0], self.size[1]))
+        pyg.draw.rect(bus_surface, self.bus_color, (0, 0, self.size[0], self.size[1]))
 
         angle = 0
         if len(self.route) > 1:
@@ -115,10 +125,10 @@ class Bus:
             prev_dist = distance(self.position[0], self.position[1], target_stop.location[0], target_stop.location[1])
             self.move(target_stop, dt)
             new_dist = distance(self.position[0], self.position[1], target_stop.location[0], target_stop.location[1])
-            ARRIVAL_EPSILON = 2.0  # or even higher if needed
+            within_distance_of = 5.0  
 
             # If we've passed the stop, or are within epsilon, snap and dwell
-            if new_dist < ARRIVAL_EPSILON or new_dist > prev_dist:
+            if new_dist < within_distance_of or new_dist > prev_dist:
                 self.position[0], self.position[1] = target_stop.location[0], target_stop.location[1]
                 self.current_speed = 0.0
                 self.stopped = True

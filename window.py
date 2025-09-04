@@ -16,7 +16,7 @@ drag_start = None
 stops = []
 edges = []
 
-bus = None
+bus = []
 
 moving = False
 move_target = None
@@ -111,8 +111,9 @@ while running:
 		#Bus spawning
 		if event.type == pyg.KEYDOWN and event.key == pyg.K_SPACE and len(stops) > 1:
 			print("spawning a bus!")
-			bus = Bus(start_stop = stops[0])
-			bus.set_route(stops)
+			x = (Bus(start_stop = stops[0]))
+			bus.append(x)
+			x.set_route(stops)
 
 	screen.fill((0, 0, 0))
 	
@@ -127,9 +128,11 @@ while running:
 	
 
 	dt = clock.get_time() / 1000.0	
-	if bus is not None:
-		bus.update(dt)
-		bus.draw(screen)
+	for buses in bus:
+		if buses is not None:
+			buses.update(dt)
+			#buses.set_route(stops) need a new method likely for updating when a new stop is added.
+			buses.draw(screen)
 		
 
 	if mode == "connecting" and drag_start:
