@@ -10,6 +10,11 @@ class Passenger:
         self.y = 0
         self.x1 = 1
         self.y1 = 1
-        self.current_stop = [self.x, self.y]
-        self.desired_stop = [self.x1, self.y1]
+        self.current_stop = [self.x, self.y] #shouldn just be the stop this passenger is spawned at, coords unnecessary. 
+        self.desired_stop = [self.x1, self.y1] #refactor these so they go through all available stops (excluding the current stop) and make a choice based on avail stops. 
         self.time_waited = 0.0
+    
+    def update(self, dt):
+        #Some type of update fucntion to count the time waited
+        
+        pass

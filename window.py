@@ -4,6 +4,7 @@ from utils import *
 import numpy as np
 from bus import Bus
 
+# Next step is to get this into a non graphical state
 
 pyg.init()
 screen = pyg.display.set_mode((800,800))
@@ -70,7 +71,7 @@ while running:
 					drag_start.connections.append(target)
 					print(f"Connected {drag_start.location} to {target.location}" + (" (one-way)" if (mods & pyg.KMOD_CTRL) else ""))
 
-				
+				# Note oneway roads don't really do anything different as a bus has no sense of direction. s
 				if not (mods & pyg.KMOD_CTRL):
 					if (target, drag_start) not in edges:
 						edges.append((target, drag_start))
@@ -93,8 +94,9 @@ while running:
 					s.connections.remove(target)
 		
 		#delete a road
+		#Note this currently breaks the system as a bus will not update its route based on roads.
 			if mods & pyg.KMOD_CTRL:
-				for edge in edges[:]:
+				for edge in edges:
 					a, b = edge
 
 					if is_road_near(mouse_pos, (a.location, b.location), threshold=30):
@@ -115,6 +117,9 @@ while running:
 			bus.append(x)
 			x.set_route(stops)
 
+
+		#Note there is no way to remove a bus, add to implement list.
+
 	screen.fill((0, 0, 0))
 	
 	for stop in stops:
@@ -131,7 +136,7 @@ while running:
 	for buses in bus:
 		if buses is not None:
 			buses.update(dt)
-			#buses.set_route(stops) need a new method likely for updating when a new stop is added.
+			#buses.set_route(stops) need to add to .update to check for new stops.
 			buses.draw(screen)
 		
 
@@ -139,7 +144,7 @@ while running:
 		pyg.draw.line(screen, (150, 150, 150), drag_start.location, pyg.mouse.get_pos(), 2)
 
 
-	# flip() the display to put your work on screen
+	
 	pyg.display.flip()
 
 	clock.tick(144)  # limits FPS to 144

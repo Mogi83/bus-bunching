@@ -12,8 +12,9 @@ class Stop:
         self.connections = []
 
     def update(self):
+        #Am I handling passenger spawnning here or within the passenger class?
         if self.rng.random() < 0.1:
-            self.world.passengers.append(Passenger())
+            self.world.passengers.append(None) #should be a new passenger.
             self.passengers_waiting += 1
             print("New passenger spawned!")
 
